@@ -1,0 +1,54 @@
+CmaOptimizer {
+	signature_prefix = 'ExperimentX.R1'
+	max_generations = 10000
+	
+	SimulationObjective {
+		max_duration = 20
+		
+		# Model used in simulation
+		Model {
+			type = Simbody
+			model_file = Pendulum.osim
+			fixed_control_step_size = 0.005
+			
+			Properties {
+				# increase left iliopsoas force by factor 2
+				#m1 { activation_time_constant = 0.01 }			
+				#m2 { activation_time_constant = 0.01 }			
+				#m1{ tendon_slack_length = 0.071421 }
+				#m2{ tendon_slack_length = 0.071421 }
+				#m1{ max_isometric_force = 2100 }
+				#m2{ max_isometric_force = 2100 }
+			}
+			
+			# Required for Perturbations
+			enable_external_forces = 1
+		}
+		
+		# Controller for the Model
+		CompositeController {
+			
+			# controller for the muscles, also includes random perturbations
+			ScriptController {
+				name = control
+				script_file = PendulumController.lua #Change controller here
+				perturb_amplitude = 100
+				perturb_interval = 0.1
+				perturb_seed = 1
+				u0 = ~0.5<0.01,1> #Set specific value here for CoconFix controller
+				Kp = ~-5<-20,20>
+				Kd = ~-0.2<-1,1>
+				delay = 0.00
+			}		
+		}
+		
+		# Measure based on lua script
+		ScriptMeasure {
+			script_file = "PendulumMeasureBarrier.lua"
+			Wtrack = 10
+			Weffort = 1
+			RMS = 5
+			dur = 20
+		}
+	}
+}
